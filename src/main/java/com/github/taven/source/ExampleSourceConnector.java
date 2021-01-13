@@ -15,6 +15,7 @@ public class ExampleSourceConnector extends SourceConnector {
 
     @Override
     public void start(Map<String, String> props) {
+        this.props = props;
         System.out.println("ExampleSourceConnector started, props:" + props);
     }
 
@@ -36,6 +37,9 @@ public class ExampleSourceConnector extends SourceConnector {
     @Override
     public ConfigDef config() {
         ConfigDef configDef = new ConfigDef();
+        configDef.define("database.url", ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "url doc")
+                .define("database.username", ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "username doc")
+                .define("database.password", ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "password doc");
         return configDef;
     }
 
