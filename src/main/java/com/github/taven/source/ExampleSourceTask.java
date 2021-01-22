@@ -58,47 +58,17 @@ public class ExampleSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        return queryRecord();
-    }
-
-    private List<SourceRecord> queryRecord() {
         ResultSet resultSet = null;
 
         try {
-            if (stmt == null) {
-                String sql = "select * from ? where id > ? limit 10000";
-                stmt = connection.prepareStatement(sql);
-            }
-
-            Map<String, Object> sourceOffsetRead = context.offsetStorageReader()
-                    .offset(Collections.singletonMap("currentTable", this.currentTable));
-            Integer position = (Integer) sourceOffsetRead.get("position");
-
-            stmt.setString(1, this.currentTable);
-            stmt.setInt(2, position);
+            getStatement();
 
             resultSet = stmt.executeQuery();
 
-            if (resultSet != null) {
-                List<SourceRecord> records = new ArrayList<>();
+            List<SourceRecord> records = resultSetConvert(resultSet);
 
-                while (resultSet.next()) {
-                    ResultSetMetaData metaData = resultSet.getMetaData();
-
-                    int id = resultSet.getInt("id");
-
-                    Struct struct = handleResultSet(resultSet, metaData);
-
-                    Map<String, Object> sourcePartition = Collections.singletonMap("currentTable", currentTable);
-                    Map<String, Object> sourceOffset = Collections.singletonMap("position", id);
-
-                    records.add(new SourceRecord(sourcePartition, sourceOffset, currentTable, Schema.STRING_SCHEMA,
-                            String.valueOf(id), struct.schema(), struct));
-
-                }
-
+            if (records != null)
                 return records;
-            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -116,7 +86,54 @@ public class ExampleSourceTask extends SourceTask {
         return null;
     }
 
-    private Struct handleResultSet(ResultSet resultSet, ResultSetMetaData metaData) throws SQLException {
+
+    private void getStatement() throws SQLException {
+        if (stmt == null) {
+            String sql = "select * from ? where id > ? limit 10000";
+            stmt = connection.prepareStatement(sql);
+        }
+
+        Map<String, Object> sourceOffsetRead = context.offsetStorageReader()
+                .offset(Collections.singletonMap("currentTable", this.currentTable));
+        Integer position = (Integer) sourceOffsetRead.get("position");
+
+        stmt.setString(1, this.currentTable);
+        stmt.setInt(2, position);
+    }
+
+    private List<SourceRecord> resultSetConvert(ResultSet resultSet) throws SQLException {
+        if (resultSet != null) {
+            List<SourceRecord> records = new ArrayList<>();
+
+            while (resultSet.next()) {
+                ResultSetMetaData metaData = resultSet.getMetaData();
+
+                int id = resultSet.getInt("id");
+
+                Struct struct = resultSetMapping(resultSet, metaData);
+
+                Map<String, Object> sourcePartition = Collections.singletonMap("currentTable", currentTable);
+                Map<String, Object> sourceOffset = Collections.singletonMap("position", id);
+
+                records.add(new SourceRecord(sourcePartition, sourceOffset, currentTable, Schema.STRING_SCHEMA,
+                        String.valueOf(id), struct.schema(), struct));
+
+            }
+
+            return records;
+        }
+        return null;
+    }
+
+    /**
+     * 将ResultSet 结构映射到 Kafka Connect Struct
+     *
+     * @param resultSet
+     * @param metaData
+     * @return
+     * @throws SQLException
+     */
+    private Struct resultSetMapping(ResultSet resultSet, ResultSetMetaData metaData) throws SQLException {
         Map<String, Object> fieldValueMap = new HashMap<>();
 
         SchemaBuilder builder = SchemaBuilder.struct().name(currentTable);
@@ -131,7 +148,6 @@ public class ExampleSourceTask extends SourceTask {
             // 这里只列出几种类型，用于演示
             switch (mysqlType) {
                 case INT:
-                case SMALLINT:
                     columnSchema = Schema.INT32_SCHEMA;
                     value = resultSet.getInt(i);
                     break;
@@ -161,9 +177,8 @@ public class ExampleSourceTask extends SourceTask {
                     value = resultSet.getBoolean(i);
                     break;
                 case DOUBLE:
-                case FLOAT:
                     columnSchema = Schema.FLOAT64_SCHEMA;
-                    value = resultSet.getDouble(i);// 这里貌似有点奇怪。。。
+                    value = resultSet.getDouble(i);
                     break;
                 default:
                     throw new RuntimeException("not supported type");
@@ -189,6 +204,14 @@ public class ExampleSourceTask extends SourceTask {
 
     @Override
     public synchronized void stop() {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+
         if (connection != null) {
             try {
                 connection.close();
@@ -196,11 +219,6 @@ public class ExampleSourceTask extends SourceTask {
                 logger.error(e.getMessage(), e);
             }
         }
-    }
-
-
-    public static void main(String[] args) {
-        System.out.println(String.class.getName());
     }
 
 }
