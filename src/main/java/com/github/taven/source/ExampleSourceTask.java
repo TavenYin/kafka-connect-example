@@ -29,7 +29,7 @@ public class ExampleSourceTask extends SourceTask {
     @Override
     public void start(Map<String, String> props) {
         config = new ExampleSourceConfig(props);
-        currentTable = config.getString("database.table");
+        currentTable = props.get("database.table");
 
         loadJdbcDriver();
 
@@ -90,7 +90,7 @@ public class ExampleSourceTask extends SourceTask {
 
     private void getStatement() throws SQLException {
         if (stmt == null) {
-            String sql = "select * from ? where id > ? limit 10000";
+            String sql = String.format("select * from %s where id > ? limit 10000", currentTable);
             stmt = connection.prepareStatement(sql);
         }
 
@@ -98,8 +98,7 @@ public class ExampleSourceTask extends SourceTask {
                 .offset(Collections.singletonMap("currentTable", this.currentTable));
         Integer position = sourceOffsetRead != null ? (Integer) sourceOffsetRead.get("position") : Integer.valueOf(0);
 
-        stmt.setString(1, this.currentTable);
-        stmt.setInt(2, position);
+        stmt.setInt(1, position);
     }
 
     private List<SourceRecord> resultSetConvert(ResultSet resultSet) throws SQLException {
