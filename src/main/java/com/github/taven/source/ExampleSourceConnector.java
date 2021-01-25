@@ -4,19 +4,20 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ExampleSourceConnector extends SourceConnector {
-
-    private Map<String, String> props;
+    final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private ExampleSourceConfig config;
+    private Map<String, String> configMap;
 
     @Override
     public void start(Map<String, String> props) {
-        this.props = props;
-        System.out.println("ExampleSourceConnector starting, props:" + props);
+        this.configMap = props;
+        this.config = new ExampleSourceConfig(props);
     }
 
     @Override
@@ -26,7 +27,18 @@ public class ExampleSourceConnector extends SourceConnector {
 
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
-        return Collections.singletonList(props);
+        List<String> tables = config.getList("database.tables");
+
+        // 这里简单的按照表数量进行分组。实际情况中，可以根据maxTask以及其他配置来决定Task数量
+        List<Map<String, String>> taskConfigs = new ArrayList<>();
+
+        for (String table : tables) {
+            Map<String, String> taskConfig = new HashMap<>(configMap);
+            taskConfig.put("database.table", table);
+            taskConfigs.add(taskConfig);
+        }
+
+        return taskConfigs;
     }
 
     @Override

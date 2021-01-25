@@ -29,6 +29,7 @@ public class ExampleSourceTask extends SourceTask {
     @Override
     public void start(Map<String, String> props) {
         config = new ExampleSourceConfig(props);
+        currentTable = config.getString("database.table");
 
         loadJdbcDriver();
 
@@ -49,8 +50,8 @@ public class ExampleSourceTask extends SourceTask {
     private Connection getJdbcConnection() {
         try {
             // 根据config
-            return DriverManager.getConnection("jdbc:mysql://localhost/test?" +
-                    "user=minty&password=greatsqldb");
+            return DriverManager.getConnection(config.getString("database.url"),
+                    config.getString("database.username"), config.getString("database.password"));
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
@@ -95,7 +96,7 @@ public class ExampleSourceTask extends SourceTask {
 
         Map<String, Object> sourceOffsetRead = context.offsetStorageReader()
                 .offset(Collections.singletonMap("currentTable", this.currentTable));
-        Integer position = (Integer) sourceOffsetRead.get("position");
+        Integer position = sourceOffsetRead != null ? (Integer) sourceOffsetRead.get("position") : Integer.valueOf(0);
 
         stmt.setString(1, this.currentTable);
         stmt.setInt(2, position);

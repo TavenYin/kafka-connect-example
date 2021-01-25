@@ -1,10 +1,25 @@
-### 启动zookeeper 和 kafka
+### 1. 启动zookeeper 和 kafka
 ```
-docker run -d --name zookeeper -p 2181:2181 -t wurstmeister/zookeeper
-docker run -d --name kafka --publish 9092:9092 \
-        --link zookeeper \
-        --env KAFKA_ZOOKEEPER_CONNECT=192.168.3.21:2181 \
-        --env KAFKA_ADVERTISED_HOST_NAME=192.168.3.21 \
-        --env KAFKA_ADVERTISED_PORT=9092  \
-        wurstmeister/kafka:2.13-2.7.0
+# script/docker-compose.yaml 启动zookeeper与kafka
+docker-compose -f docker-compose.yaml up
+```
+
+### 2. 运行项目中内嵌的Kafka Connect
+```
+mvn clean install -DskipTests -f pom.xml
+java -cp ...
+```
+或者直接在IDE中执行
+
+### 3. 启动Connector
+```
+# 启动 source Connector
+cd script
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @source.json
+
+# 删除Connector
+curl -X DELETE localhost:8083/connectors/example-source
+
+# 查看Connector
+curl -X GET localhost:8083/connectors/example-source/status
 ```

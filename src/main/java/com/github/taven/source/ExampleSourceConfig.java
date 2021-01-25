@@ -6,6 +6,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import java.util.Map;
 
 public class ExampleSourceConfig extends AbstractConfig {
+
     public ExampleSourceConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps, boolean doLog) {
         super(definition, originals, configProviderProps, doLog);
     }
@@ -26,6 +27,7 @@ public class ExampleSourceConfig extends AbstractConfig {
     static ConfigDef CONFIGDEF = new ConfigDef()
             .define("database.url", ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "url doc")
             .define("database.username", ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "username doc")
-            .define("database.password", ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "password doc");
+            .define("database.password", ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "password doc")
+            .define("database.tables", ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "tables doc");
 
 }

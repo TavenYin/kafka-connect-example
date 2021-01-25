@@ -1,0 +1,11 @@
+{
+  "name" : "example-source",
+  "config" : {
+    "connector.class" : "com.github.taven.source.ExampleSourceConnector",
+    "tasks.max" : "1",
+    "database.url" : "jdbc:mysql://127.0.0.1:3306/test?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&rewriteBatchedStatements=true",
+    "database.username" : "root",
+    "database.password" : "root",
+    "database.tables" : ["test_user"]
+  }
+}
