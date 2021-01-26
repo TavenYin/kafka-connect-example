@@ -96,6 +96,7 @@ public class ExampleSourceTask extends SourceTask {
             stmt = connection.prepareStatement(sql);
         }
 
+        // TODO 参考jdbc-connect，由于offset的提交是异步的，所以并不能依赖该方法读取offset，该方法是用于task开始时，获取上一次任务的offset
         Map<String, Object> sourceOffsetRead = context.offsetStorageReader()
                 .offset(Collections.singletonMap("currentTable", this.currentTable));
         Long position = sourceOffsetRead != null ? (Long) sourceOffsetRead.get("position") : Long.valueOf(0);
