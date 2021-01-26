@@ -13,6 +13,7 @@ java -cp ...
 
 ### 3. 启动Connector
 ```
+# script 目录下执行该命令
 # 启动 source Connector
 cd script
 curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @source.json

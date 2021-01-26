@@ -59,6 +59,8 @@ public class ExampleSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
+        logger.info("do poll");
+
         ResultSet resultSet = null;
 
         try {
@@ -96,9 +98,9 @@ public class ExampleSourceTask extends SourceTask {
 
         Map<String, Object> sourceOffsetRead = context.offsetStorageReader()
                 .offset(Collections.singletonMap("currentTable", this.currentTable));
-        Integer position = sourceOffsetRead != null ? (Integer) sourceOffsetRead.get("position") : Integer.valueOf(0);
+        Long position = sourceOffsetRead != null ? (Long) sourceOffsetRead.get("position") : Long.valueOf(0);
 
-        stmt.setInt(1, position);
+        stmt.setInt(1, position.intValue());
     }
 
     private List<SourceRecord> resultSetConvert(ResultSet resultSet) throws SQLException {
@@ -219,6 +221,15 @@ public class ExampleSourceTask extends SourceTask {
                 logger.error(e.getMessage(), e);
             }
         }
+    }
+
+    public static void main(String[] args) {
+        Map map = new HashMap();
+        map.put("a", "a");
+
+        Map map2 = new HashMap();
+        map2.put("a", "a");
+        System.out.println(map.equals(map2));
     }
 
 }
