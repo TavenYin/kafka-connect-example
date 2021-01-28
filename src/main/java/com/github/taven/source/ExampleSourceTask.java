@@ -32,9 +32,7 @@ public class ExampleSourceTask extends SourceTask {
         config = new ExampleSourceConfig(props);
         currentTable = props.get("database.table");
 
-        loadJdbcDriver();
-
-        connection = getJdbcConnection();
+        initJdbc();
 
         // 由于offset的提交是异步的，所以并不能每次都依赖该方法读取offset
         // 该方法是用于task开始时，获取上一次任务的offset
@@ -45,24 +43,19 @@ public class ExampleSourceTask extends SourceTask {
         logger.info("ExampleSourceTask started, props:{}", props);
     }
 
-    private void loadJdbcDriver() {
+    private void initJdbc() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+
+            // 根据config
+            this.connection = DriverManager.getConnection(config.getString("database.url"),
+                    config.getString("database.username"), config.getString("database.password"));
+
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage(), ex);
         }
     }
 
-
-    private Connection getJdbcConnection() {
-        try {
-            // 根据config
-            return DriverManager.getConnection(config.getString("database.url"),
-                    config.getString("database.username"), config.getString("database.password"));
-        } catch (SQLException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
