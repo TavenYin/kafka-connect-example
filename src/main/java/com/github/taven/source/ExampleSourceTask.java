@@ -215,13 +215,4 @@ public class ExampleSourceTask extends SourceTask {
         }
     }
 
-    public static void main(String[] args) {
-        Map map = new HashMap();
-        map.put("a", "a");
-
-        Map map2 = new HashMap();
-        map2.put("a", "a");
-        System.out.println(map.equals(map2));
-    }
-
 }
