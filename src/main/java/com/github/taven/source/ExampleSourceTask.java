@@ -20,6 +20,7 @@ public class ExampleSourceTask extends SourceTask {
     Connection connection;
     String currentTable;
     PreparedStatement stmt;
+    Long taskOffset;
 
     @Override
     public String version() {
@@ -35,7 +36,13 @@ public class ExampleSourceTask extends SourceTask {
 
         connection = getJdbcConnection();
 
-        logger.info("ExampleSourceTask starting, props:{}", props);
+        // 由于offset的提交是异步的，所以并不能每次都依赖该方法读取offset
+        // 该方法是用于task开始时，获取上一次任务的offset
+        Map<String, Object> sourceOffsetRead = context.offsetStorageReader()
+                .offset(Collections.singletonMap("currentTable", this.currentTable));
+        taskOffset = sourceOffsetRead != null ? (Long) sourceOffsetRead.get("position") : Long.valueOf(0);
+
+        logger.info("ExampleSourceTask started, props:{}", props);
     }
 
     private void loadJdbcDriver() {
@@ -59,49 +66,33 @@ public class ExampleSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        logger.info("do poll");
-
-        ResultSet resultSet = null;
-
-        try {
-            getStatement();
-
-            resultSet = stmt.executeQuery();
-
+        try (ResultSet resultSet = doQuery()) {
             List<SourceRecord> records = resultSetConvert(resultSet);
 
-            if (records != null)
+            if (records != null && records.size() != 0) {
+                // update taskOffset
+                SourceRecord lastRecord = records.get(records.size() - 1);
+                taskOffset = (Long) lastRecord.sourceOffset().get("position");
+
                 return records;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
-
-        } finally {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    logger.error(e.getMessage(), e);
-                }
-            }
         }
 
         return null;
     }
 
 
-    private void getStatement() throws SQLException {
+    private ResultSet doQuery() throws SQLException {
         if (stmt == null) {
             String sql = String.format("select * from %s where id > ? limit 10000", currentTable);
             stmt = connection.prepareStatement(sql);
         }
 
-        // TODO 参考jdbc-connect，由于offset的提交是异步的，所以并不能依赖该方法读取offset，该方法是用于task开始时，获取上一次任务的offset
-        Map<String, Object> sourceOffsetRead = context.offsetStorageReader()
-                .offset(Collections.singletonMap("currentTable", this.currentTable));
-        Long position = sourceOffsetRead != null ? (Long) sourceOffsetRead.get("position") : Long.valueOf(0);
-
-        stmt.setInt(1, position.intValue());
+        stmt.setLong(1, taskOffset.intValue());
+        return stmt.executeQuery();
     }
 
     private List<SourceRecord> resultSetConvert(ResultSet resultSet) throws SQLException {
@@ -111,7 +102,7 @@ public class ExampleSourceTask extends SourceTask {
             while (resultSet.next()) {
                 ResultSetMetaData metaData = resultSet.getMetaData();
 
-                int id = resultSet.getInt("id");
+                long id = resultSet.getLong("id");
 
                 Struct struct = resultSetMapping(resultSet, metaData);
 
