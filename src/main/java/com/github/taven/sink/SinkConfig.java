@@ -34,8 +34,8 @@ public class SinkConfig extends AbstractConfig {
 
     static final ConfigDef SINK_CONFIG_DEF = new ConfigDef()
             .define(REDIS_HOST, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, REDIS_HOST_DOC)
-            .define(REDIS_PORT, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, REDIS_PORT_DOC)
-            .define(REDIS_DATABASE, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, REDIS_DATABASE_DOC)
+            .define(REDIS_PORT, ConfigDef.Type.INT, ConfigDef.Importance.HIGH, REDIS_PORT_DOC)
+            .define(REDIS_DATABASE, ConfigDef.Type.INT, ConfigDef.Importance.HIGH, REDIS_DATABASE_DOC)
             .define(REDIS_PASSWORD, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, REDIS_PASSWORD_DOC);
 
 }

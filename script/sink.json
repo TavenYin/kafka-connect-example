@@ -1,3 +1,12 @@
 {
-
+  "name" : "example-sink",
+  "config" : {
+    "connector.class" : "com.github.taven.sink.ExampleSinkConnector",
+    "topics" : "test_user, test_order",
+    "tasks.max" : "1",
+    "redis.host" : "localhost",
+    "redis.port" : "6379",
+    "redis.password" : "",
+    "redis.database" : "0"
+  }
 }

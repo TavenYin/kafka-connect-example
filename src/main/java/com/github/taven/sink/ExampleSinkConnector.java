@@ -7,6 +7,7 @@ import org.apache.kafka.connect.sink.SinkConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,7 @@ public class ExampleSinkConnector extends SinkConnector {
 
     @Override
     public List<Map<String, String>> taskConfigs(int i) {
-        return null;
+        return Collections.singletonList(configMap);
     }
 
     @Override
