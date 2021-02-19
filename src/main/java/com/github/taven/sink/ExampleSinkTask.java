@@ -1,6 +1,7 @@
 package com.github.taven.sink;
 
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
@@ -15,10 +16,7 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ExampleSinkTask extends SinkTask {
     @Override
@@ -29,6 +27,7 @@ public class ExampleSinkTask extends SinkTask {
     SinkConfig config;
     RedisClient redisClient;
     StatefulRedisConnection<String, String> connection;
+    static ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void start(Map<String, String> props) {
@@ -61,19 +60,26 @@ public class ExampleSinkTask extends SinkTask {
                 String redisKey = record.topic() + "_" + key;
 
                 Struct value = (Struct) record.value();
-                JSONObject redisVal = new JSONObject();
+                Map<String, Object> redisVal = new HashMap<>();
 
                 record.valueSchema().fields().forEach(field -> {
                     redisVal.put(field.name(), value.get(field));
                 });
 
-                RedisFuture<String> set = async.set(redisKey, redisVal.toJSONString());
+                String jsonVal;
+                try {
+                    jsonVal = objectMapper.writeValueAsString(redisVal);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+
+                RedisFuture<String> set = async.set(redisKey, jsonVal);
                 futures.add(set);
             }
 
         });
 
-        Futures.awaitAll(Duration.ofSeconds(1), futures.toArray(new RedisFuture[0]));
+        Futures.awaitAll(Duration.ofSeconds(2), futures.toArray(new RedisFuture[0]));
 
     }
 
