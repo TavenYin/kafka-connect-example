@@ -10,16 +10,20 @@
     <dependencySets>
         <dependencySet>
             <outputDirectory>/</outputDirectory>
-            <unpack>false</unpack>
+            <unpack>true</unpack>
             <includes>
                 <include>${artifact}</include>
             </includes>
+
 <!--            <outputFileNameMapping>xxx-web.jar</outputFileNameMapping>-->
         </dependencySet>
         <dependencySet>
-            <outputDirectory>/lib</outputDirectory>
+            <outputDirectory>/</outputDirectory>
             <useProjectArtifact>false</useProjectArtifact>
-            <unpack>false</unpack>
+            <unpack>true</unpack>
+            <excludes>
+                <exclude>org.apache.kafka:connect-runtime</exclude>
+            </excludes>
         </dependencySet>
     </dependencySets>
 </assembly>

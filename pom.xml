@@ -57,9 +57,9 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.xxx.web.WebApp</mainClass>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
+<!--                            <mainClass>com.xxx.web.WebApp</mainClass>-->
+<!--                            <addClasspath>true</addClasspath>-->
+<!--                            <classpathPrefix>lib/</classpathPrefix>-->
                         </manifest>
                     </archive>
                 </configuration>
